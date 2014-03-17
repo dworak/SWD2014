@@ -106,8 +106,8 @@ class SystemyWspomaganiaDecyzji(App):
         self.menuLeftWrapper = None;
         self.meuCenterWrapper = None;
         self.checkBoxesPlotBind = {}
-    def on_start(self):
-        Window.bind(on_key_down=self.on_key_down)
+    # def on_start(self):
+        #Window.bind(on_key_down=self.on_key_down)
 
     def on_key_down(self, win, key, scancode, string, modifiers):
         print( win.size, key)
@@ -124,7 +124,7 @@ class SystemyWspomaganiaDecyzji(App):
     def getLeftWrapper(self):
         return self.me
     
-    def pokazWyborPliku(self, instance, animated):
+    def pokazWyborPliku(self, animated, instance, *args):
         modalType = 1
         anim = None;
         
@@ -141,24 +141,9 @@ class SystemyWspomaganiaDecyzji(App):
             pass
             
         self.modalView = ModalView(size_hint=(None, None), size=size)
+        self.modalView.add_widget(self.sharedInstance.przegladajDysk())
         
-        if modalType == ModalTypes.FILE:
-            self.modalView.add_widget(self.sharedInstance.przegladajDysk())
-        elif modalType == ModalTypes.ATTRIBUTE:
-            print "ATTRIBUTE VIEW"
-            #TODO: add attribute view
-        elif modalType == ModalTypes.OBJECT:
-            viewWrapper = BoxLayout(orientation="vertical")
-            for i in range(5):
-                l = Label(text='Nazwa atrybutu')
-                textinput = TextInput(text='Hello world',multiline=False)
-                viewWrapper.add_widget(l)
-                viewWrapper.add_widget(textinput)
-            viewWrapper.add_widget(Button(text='Dodaj', font_size=14,  background_color=[0, 122.0/255, 1,1], on_press=self.modalView.dismiss))
-            self.modalView.add_widget(viewWrapper)
-            print "OBJECT VIEW"
-            #TODO add object view
-        else: raise "Uknown modal type"
+        #paramter in the method call, will perform some basic slace animation
         if(animated): 
             anim.start(self.modalView)
         self.modalView.open()
@@ -166,11 +151,36 @@ class SystemyWspomaganiaDecyzji(App):
     def pokazDodanieAtrybutu(self):
         view = ModalView(size_hint=(None, None), size=(640, 480))
         view.open()
+        return view
         
-    def pokazDodanieObiektu(self):
+    def pokazDodanieObiektu(self, *args):
         view = ModalView(size_hint=(None, None), size=(640, 480))
+        box = BoxLayout(orientation="vertical",spacing=10)
+        scrollView = ScrollView(bar_margin=10, bar_color=[1,1,1,1])
+        viewWrapper = GridLayout(cols=2, row_default_height=40,size_hint_y=None,padding=[-20,20,20,20])
+        viewWrapper.bind(minimum_height=viewWrapper.setter('height'))
+        
+        listaTextBoxow = []
+        
+        for i in range(len(self.sharedInstance.data.temp)):
+            l = Label(text=self.sharedInstance.data.temp[i],halign="left", width=50)
+            #textPlaceHolder = 'Tutaj wpisz wartosc dla {0}'.format(self.sharedInstance.data.temp[i])
+            #textPlaceHolder,multiline=False,  )
+            textinput = TextInput(multiline=False, text="0",focus=True) 
+            listaTextBoxow.append(textinput)
+            viewWrapper.add_widget(l)
+            viewWrapper.add_widget(textinput)
+            #background_color=[51/255.0, 181.0/255, 229/255.0,1]
+        scrollView.add_widget(viewWrapper)
+        box.add_widget(scrollView)
+        box.add_widget(Button(text='Dodaj', font_size=14, on_press=partial(self.dodajObiekt,view, listaTextBoxow), size_hint=(1, .1)))
+        view.add_widget(box)
         view.open()
         return view
+    
+    def dodajObiekt(self,view,lista,*args):
+        self.sharedInstance.data.dodajNowyWiersz([element.text for element in lista])
+        view.dismiss()
         
     def setOrientation(self, orient):
         self.orient = orient
@@ -184,6 +194,30 @@ class SystemyWspomaganiaDecyzji(App):
         else:
             self.graph.add_plot(app.checkBoxesPlotBind[instance])
         self.graph._redraw_all
+        
+    def buttonCallback(self, instance):
+        for plot in self.graph.plots:
+            plot.points = []
+            
+        poNormalizacji = {}
+        for property in self.sharedInstance.data.temp:
+            poNormalizacji[property] = self.sharedInstance.data.normalizacja(property)
+            
+        for property in poNormalizacji:
+            points = []
+            lista = poNormalizacji[property]
+            i, j = 0
+            pprint.pprint(lista)
+            for j in range(len(lista)):
+                points.append((i,lista[j]))
+                i+=1
+            pprint.pprint(points)
+#             for plot in self.graph.plots:
+#                 plot.points = points
+            
+        self.graph.ymax = 10
+        self.graph.ymin = -10
+            
         
     def buildCenterMenu(self, wrapper, rebuild=False):
         if(rebuild): wrapper.clear_widgets()
@@ -202,11 +236,11 @@ class SystemyWspomaganiaDecyzji(App):
             
     def buildLeftMenu(self, wrapper):
         buttonWybierzPlik = Button(text='Wczytaj plik', font_size=14)
-        buttonWybierzPlik.bind(on_press=self.onPressCallback)
+        buttonWybierzPlik.bind(on_press=partial(self.pokazWyborPliku,False))
         wrapper.add_widget(buttonWybierzPlik)
         
         buttonDodajObiekt = Button(text='Dodaj obiekt', font_size=14)
-        buttonDodajObiekt.bind(on_press=self.onPressCallback)
+        buttonDodajObiekt.bind(on_press=partial(self.pokazDodanieObiektu))
         wrapper.add_widget(buttonDodajObiekt)
         
         buttonDodajAtrybut = Button(text='Dodaj atrybut', font_size=14)
@@ -218,7 +252,6 @@ class SystemyWspomaganiaDecyzji(App):
         wrapper.add_widget(buttonStatystyki) 
         
     def sliderValueChanged(self,label,description,slider,*args):
-        
         if(description.tag==1):
             self.graph.x_ticks_major = 100//args[0] if args[0]!=0.0 else 100
             label.text = "{0} {1}".format(description.value,int(args[0]))
@@ -319,8 +352,9 @@ class SystemyWspomaganiaDecyzji(App):
                 gridWrapper.add_widget(s)
                 
                 # Normalizacja zmiennych rzeczywistych ( (wartosc-srednia)/odchylenie_standardowe)
-                b = Button(text="Normalizacja danych")
+                b = Button(text="Normalizacja danych", on_press=self.buttonCallback)
                 gridWrapper.add_widget(b)
+                
                 
                 z = Button(text="Zamiana danych tekstowych\nna numeryczne",  halign='center')
                 gridWrapper.add_widget(z)

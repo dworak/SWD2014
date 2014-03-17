@@ -55,7 +55,8 @@ class Data:
             return daneDlaSkladowej
             
     def dodajNowyWiersz(self, dane):
-        assert isinstance(dane, array.ArrayType),  ("Wrong parameter given in %s", self.dodajNowyWiersz.__name__)
+        print dane
+        assert isinstance(dane, list),  ("Wrong parameter given in %s", self.dodajNowyWiersz.__name__)
         if(len(dane)==len(self.temp)):
             toAppend = {}
             for i in range(len(dane)):
@@ -104,12 +105,28 @@ class Data:
         kolumny = self.zwrocWszystkieDaneDlaSkladowej(nazwaKolumny)
         os=0.0
         s = self.srednia(nazwaKolumny)
-        for x in kolumny:
-            os+=(x-s)**2.0
-        os/=len(kolumny)
+        try:
+            for x in kolumny:
+                os+=(x-s)**2.0
+            os/=len(kolumny)
+        except:
+            pass
         return os
         
     def odchylenieStandardowe(self,nazwaKolumny):
         x = self.wariancja(nazwaKolumny)
         x**=0.5
         return x
+    
+    def normalizacja(self,nazwaKolumny):
+        wartosci = self.zwrocWszystkieDaneDlaSkladowej(nazwaKolumny)
+        wartoscSrednia = self.srednia(nazwaKolumny)
+        odchylenieStandardowe = self.odchylenieStandardowe(nazwaKolumny)
+        wartosciPoNormalizacji = []
+        
+        for element in wartosci:
+            z = (element-wartoscSrednia)/odchylenieStandardowe
+            wartosciPoNormalizacji.append(z)
+            
+        return wartosciPoNormalizacji
+        
