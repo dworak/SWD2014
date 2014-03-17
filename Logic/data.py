@@ -16,11 +16,8 @@ class Data:
         return cls._instance
     
     def loadFile(self, sciezka):
-        
-        delimiter = [' ', '\t', ';', ',']
-        
         with open(sciezka, 'rb') as csvfile:
-            reader = csv.reader(csvfile, delimiter)
+            reader = csv.reader(csvfile, delimiter=';')
             for row in reader:
                 dict = {}
                 if (row[0][0].startswith('#')==False):
@@ -33,6 +30,26 @@ class Data:
                         self.data.append(dict)
                 else:
                     pass
+                
+    def zamianaWartosciTekstowychNaWartosciLiczbowe(self):
+        zamiana = {}
+        j = 0
+        
+        if self.data==None:
+            assert self.data, "You should load data file first."
+        
+        with self.data as dicts:
+            for lista in dicts:
+                for i in list:
+                    if(type(i) is str):
+                        if(zamiana[i]==None):
+                            zamiana[i] = j
+                            lista[i] = j
+                        else:
+                            lista[i] = zamiana[i]
+                    else:
+                        pass #correct -> not string value
+                    
                         
     def zwrocWszystkieWiersze(self):
         return self.data
@@ -51,7 +68,7 @@ class Data:
             for record in self.data:
                 try:
                     daneDlaSkladowej.append(float(record[nazwaKolumny]))
-                except: ValueError, "String value? Come on! Smth go wrong."
+                except: ValueError, "String value? Come on! Somemthing went wrong."
             return daneDlaSkladowej
             
     def dodajNowyWiersz(self, dane):
