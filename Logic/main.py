@@ -87,6 +87,7 @@ class ManagerPlikow:
                 i+=1
             plot.points = points 
             app.graph.add_plot(plot)
+    
         #plot.points = [(x, sin(x / 10)) for x in xrange(0, 101)]
         #print self.data.odchylenieStandardowe("Sunshine"), self.data.wariancja("Sunshine")
         #pprint.pprint(self.data.zwrocWszystkieWiersze())
@@ -279,7 +280,7 @@ class SystemyWspomaganiaDecyzji(App):
         self.graph = Graph(xlabel='X', ylabel='Y', x_ticks_minor=1,
         x_ticks_major=10, y_ticks_major=10,
         y_grid_label=True, x_grid_label=True, padding=5,
-        x_grid=True, y_grid=True, xmin=-0, xmax=100, ymin=-10, ymax=100)
+        x_grid=True, y_grid=True, xmin=-0, xmax=100, ymin=0, ymax=10)
         
         layout.add_widget(self.graph)
         

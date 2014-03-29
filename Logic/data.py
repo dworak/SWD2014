@@ -38,17 +38,18 @@ class Data:
         if self.data==None:
             assert self.data, "You should load data file first."
         
-        with self.data as dicts:
-            for lista in dicts:
-                for i in list:
-                    if(type(i) is str):
-                        if(zamiana[i]==None):
-                            zamiana[i] = j
-                            lista[i] = j
-                        else:
-                            lista[i] = zamiana[i]
+        for lista in self.data:
+            print lista
+            for i in lista:
+                if(type(lista[i]) is str):
+                    if(str(i) in zamiana):
+                        zamiana[str(i)] = j
+                        lista[str(i)] = j
+                        j+=1
                     else:
-                        pass #correct -> not string value
+                        lista[str(i)] = zamiana[str(i)]
+                else:
+                    pass #correct -> not string value
                     
                         
     def zwrocWszystkieWiersze(self):
