@@ -257,6 +257,8 @@ class Data:
         
         distances = []
         
+        ilosc_poprawnie_zaliczonych = 0
+        
 #         testedValuesArray = [self.data[numerWierszaTestowanego][i] for i in nazwaParametrow]
 #         testedValueCasted = [float(i) for i in testedValuesArray]
     
@@ -265,6 +267,8 @@ class Data:
 #         assert numerWierszaTestowanego not in numeryWierszyTreningowych, "Wiersz testowany nie moze byc w puli treningowej"
         
         sorted_by_second = None;
+        
+        #TODO: przerobic to zeby nie powielac tego samego kodu
         
         if(metryka==MetrykaValues.EUCLIDES):
             for j in range(len(self.data)):
@@ -277,7 +281,25 @@ class Data:
                     d = m.metrykaEuklidesowa(currentValueCasted, trainingValueCasted)
                     distances.append((i,d));
                     
-            sorted_by_second = sorted(distances, key=lambda tup: tup[1])
+                    sorted_by_second = sorted(distances, key=lambda tup: tup[1])
+            
+                    di = {}
+                    for i in sorted_by_second[:k]:
+                        if i[1] in di:
+                            di[i[1]] +=1
+                        else:
+                            di[i[1]] = 0
+                    
+                    maxMember = None
+                    maxMemberCount = 0        
+                    for key in di:
+                        if di[key] > maxMemberCount:
+                            maxMemberCount = di[key]
+                            maxMember = key
+                        else:
+                            continue
+                    if(maxMember==float(self.data[j][parametrKlasyDecyzyjnej])):
+                        ilosc_poprawnie_zaliczonych+=1
            
                 
         elif(metryka==MetrykaValues.MAHALANOBIS):
@@ -291,7 +313,25 @@ class Data:
                     d = m.metrykaMahalanobisa(currentValueCasted, trainingValueCasted,None)
                     distances.append((i,d));
                     
-            sorted_by_second = sorted(distances, key=lambda tup: tup[1])
+                    sorted_by_second = sorted(distances, key=lambda tup: tup[1])
+                    
+                    di = {}
+                    for i in sorted_by_second[:k]:
+                        if i[1] in di:
+                            di[i[1]] +=1
+                        else:
+                            di[i[1]] = 0
+                    
+                    maxMember = None
+                    maxMemberCount = 0        
+                    for key in di:
+                        if di[key] > maxMemberCount:
+                            maxMemberCount = di[key]
+                            maxMember = key
+                        else:
+                            continue
+                    if(maxMember==float(self.data[j][parametrKlasyDecyzyjnej])):
+                        ilosc_poprawnie_zaliczonych+=1
             
         elif(metryka==MetrykaValues.MANHATAN):
             for j in range(len(self.data)):
@@ -307,26 +347,28 @@ class Data:
                         d = m.metrykaManhattan(currentValueCasted, trainingValueCasted)
                         distances.append((i,d));
                         
-                sorted_by_second = sorted(distances, key=lambda tup: tup[1])
-            
-        d = {}
-        for i in sorted_by_second[:k]:
-            if i[1] in d:
-                d[i[1]] +=1
-            else:
-                d[i[1]] = 0
-        
-        maxMember = None
-        maxMemberCount = 0        
-        for key in d:
-            if d[key] > maxMemberCount:
-                maxMemberCount = d[key]
-                maxMember = key
-            else:
-                continue  
-        print maxMember, maxMemberCount
-        #print sorted_by_second   
-             
+                        sorted_by_second = sorted(distances, key=lambda tup: tup[1])
+                
+                    di = {}
+                    for i in sorted_by_second[:k]:
+                        if i[1] in di:
+                            di[i[1]] +=1
+                        else:
+                            di[i[1]] = 0
+                    
+                    maxMember = None
+                    maxMemberCount = 0        
+                    for key in di:
+                        if di[key] > maxMemberCount:
+                            maxMemberCount = di[key]
+                            maxMember = key
+                        else:
+                            continue
+                        
+                    if(maxMember==float(self.data[j][parametrKlasyDecyzyjnej])):
+                        ilosc_poprawnie_zaliczonych+=1
+                        
+        return ilosc_poprawnie_zaliczonych / len(self.data)
                 
     def skip(self,iterable, at_start=0, at_end=0):
         it = iter(iterable)
@@ -343,7 +385,7 @@ if __name__ == "__main__":
     d = Data()
     d.loadFile("/Users/lukaszdworakowski/Documents/Aptana Studio 3 Workspace/SWD/Data/dane.csv")
     print d.sklasyfikuj(1, ["Temp3pm","Pressure9am","RelHumid9am"], 20, MetrykaValues.EUCLIDES)
-    d.jakoscKlasyfikacji(10,["Temp3pm"], 2)   
+    print d.jakoscKlasyfikacji(10,["Temp3pm"], 2)   
         
         
         
