@@ -10,6 +10,9 @@ from sys import maxint
 from metryka import Metryka
 from numpy.numarray.numerictypes import MAX_INT_SIZE
 
+#statistics
+from sklearn.cross_validation import LeaveOneOut
+
 class MetrykaValues:
     MANHATAN      = 1
     EUCLIDES      = 2
@@ -259,6 +262,8 @@ class Data:
         
         ilosc_poprawnie_zaliczonych = 0
         
+        ilosc_elementow = len(self.data)
+        
 #         testedValuesArray = [self.data[numerWierszaTestowanego][i] for i in nazwaParametrow]
 #         testedValueCasted = [float(i) for i in testedValuesArray]
     
@@ -268,87 +273,74 @@ class Data:
         
         sorted_by_second = None;
         
+        currentValuesArray = [self.data[numerWierszaTestowanego][w] for w in nazwaParametrow]
+        currentValueCasted = [float(h) for h in currentValuesArray]
+        
+        
+        # Wszystkie oprocz jednego testowego w czesci treningowej
+        loo = LeaveOneOut(len(self.data))
+        
         #TODO: przerobic to zeby nie powielac tego samego kodu
         
         if(metryka==MetrykaValues.EUCLIDES):
-            for j in range(len(self.data)):
-                currentValuesArray = [self.data[j][w] for w in nazwaParametrow]
-                currentValueCasted = [float(h) for h in currentValuesArray]
-                for i in range(len(self.data)):
+            for train, test in loo:
+                counter = 0
+                for i in train:
+                    print "Treningowa: {0} \n Testowa: {1}".format(train,test)
+                    
+                    counter+=1
+                    
                     trainingValuesArray = [self.data[i][w] for w in nazwaParametrow]
+                    trainingValueCasted = [float(h) for h in trainingValuesArray]
+                    
+                    d = m.metrykaManhattan(currentValueCasted, trainingValueCasted)
+                    distances.append((i,d));
+                    
+                    sorted_by_second = sorted(distances, key=lambda tup: tup[1])
+            
+                    di = {}
+                    for i in sorted_by_second[:k]:
+                        if i[1] in di:
+                            di[i[1]] +=1
+                        else:
+                            di[i[1]] = 0
+                    
+                    maxMember = None
+                    maxMemberCount = 0        
+                    for key in di:
+                        if di[key] > maxMemberCount:
+                            maxMemberCount = di[key]
+                            maxMember = key
+                        else:
+                            continue
+                    
+                for t in test:
+                    trainingValuesArray = [self.data[t][w] for w in nazwaParametrow]
                     trainingValueCasted = [float(h) for h in trainingValuesArray]
                     
                     d = m.metrykaEuklidesowa(currentValueCasted, trainingValueCasted)
-                    distances.append((i,d));
                     
-                    sorted_by_second = sorted(distances, key=lambda tup: tup[1])
-            
-                    di = {}
-                    for i in sorted_by_second[:k]:
-                        if i[1] in di:
-                            di[i[1]] +=1
-                        else:
-                            di[i[1]] = 0
-                    
-                    maxMember = None
-                    maxMemberCount = 0        
-                    for key in di:
-                        if di[key] > maxMemberCount:
-                            maxMemberCount = di[key]
-                            maxMember = key
-                        else:
-                            continue
-                    if(maxMember==float(self.data[j][parametrKlasyDecyzyjnej])):
-                        ilosc_poprawnie_zaliczonych+=1
+                    if(maxMember==float(self.data[t][parametrKlasyDecyzyjnej])):
+                        ilosc_poprawnie_zaliczonych+=1  
+                        print "Ilosc poprawnie zaliczonych elementow {0}".format(ilosc_poprawnie_zaliczonych)
            
                 
         elif(metryka==MetrykaValues.MAHALANOBIS):
-            for j in range(len(self.data)):
-                currentValuesArray = [self.data[j][w] for w in nazwaParametrow]
-                currentValueCasted = [float(h) for h in currentValuesArray]
-                for i in range(len(self.data)):
+            for train, test in loo:
+                counter = 0
+                for i in train:
+                    print "Treningowa: {0} \n Testowa: {1}".format(train,test)
+                    
+                    counter+=1
+                    
                     trainingValuesArray = [self.data[i][w] for w in nazwaParametrow]
                     trainingValueCasted = [float(h) for h in trainingValuesArray]
                     
-                    d = m.metrykaMahalanobisa(currentValueCasted, trainingValueCasted,None)
+                    d = m.metrykaManhattan(currentValueCasted, trainingValueCasted)
                     distances.append((i,d));
                     
                     sorted_by_second = sorted(distances, key=lambda tup: tup[1])
-                    
-                    di = {}
-                    for i in sorted_by_second[:k]:
-                        if i[1] in di:
-                            di[i[1]] +=1
-                        else:
-                            di[i[1]] = 0
-                    
-                    maxMember = None
-                    maxMemberCount = 0        
-                    for key in di:
-                        if di[key] > maxMemberCount:
-                            maxMemberCount = di[key]
-                            maxMember = key
-                        else:
-                            continue
-                    if(maxMember==float(self.data[j][parametrKlasyDecyzyjnej])):
-                        ilosc_poprawnie_zaliczonych+=1
             
-        elif(metryka==MetrykaValues.MANHATAN):
-            for j in range(len(self.data)):
-                currentValuesArray = [self.data[j][w] for w in nazwaParametrow]
-                currentValueCasted = [float(h) for h in currentValuesArray]
-                for i in range(len(self.data)):
-                    if i == j :
-                        continue
-                    else:
-                        trainingValuesArray = [self.data[i][w] for w in nazwaParametrow]
-                        trainingValueCasted = [float(h) for h in trainingValuesArray]
-                        
-                        d = m.metrykaManhattan(currentValueCasted, trainingValueCasted)
-                        distances.append((i,d));
-                        
-                        sorted_by_second = sorted(distances, key=lambda tup: tup[1])
-                
                     di = {}
                     for i in sorted_by_second[:k]:
                         if i[1] in di:
@@ -364,11 +356,61 @@ class Data:
                             maxMember = key
                         else:
                             continue
+                    
+                for t in test:
+                    trainingValuesArray = [self.data[t][w] for w in nazwaParametrow]
+                    trainingValueCasted = [float(h) for h in trainingValuesArray]
+                    
+                    d = m.metrykaMahalanobisa(currentValueCasted, trainingValueCasted)
+                    
+                    if(maxMember==float(self.data[t][parametrKlasyDecyzyjnej])):
+                        ilosc_poprawnie_zaliczonych+=1  
+                        print "Ilosc poprawnie zaliczonych elementow {0}".format(ilosc_poprawnie_zaliczonych)
                         
-                    if(maxMember==float(self.data[j][parametrKlasyDecyzyjnej])):
-                        ilosc_poprawnie_zaliczonych+=1
-                        
-        return ilosc_poprawnie_zaliczonych / len(self.data)
+        elif(metryka==MetrykaValues.MANHATAN):
+            for train, test in loo:
+                print "Treningowa: {0} \n Testowa: {1}".format(train,test)
+                counter = 0
+                for i in train:
+                    #print train
+                    
+                    counter+=1
+                    
+                    trainingValuesArray = [self.data[i][w] for w in nazwaParametrow]
+                    trainingValueCasted = [float(h) for h in trainingValuesArray]
+                    
+                    d = m.metrykaManhattan(currentValueCasted, trainingValueCasted)
+                    distances.append((i,d));
+                    
+                    sorted_by_second = sorted(distances, key=lambda tup: tup[1])
+            
+                    di = {}
+                    for i in sorted_by_second[:k]:
+                        if i[1] in di:
+                            di[i[1]] +=1
+                        else:
+                            di[i[1]] = 0
+                    
+                    maxMember = None
+                    maxMemberCount = 0        
+                    for key in di:
+                        if di[key] > maxMemberCount:
+                            maxMemberCount = di[key]
+                            maxMember = key
+                        else:
+                            continue
+                    
+                for t in test:
+                    trainingValuesArray = [self.data[t][w] for w in nazwaParametrow]
+                    trainingValueCasted = [float(h) for h in trainingValuesArray]
+                    
+                    d = m.metrykaManhattan(currentValueCasted, trainingValueCasted)
+                    
+                    if(maxMember==float(self.data[t][parametrKlasyDecyzyjnej])):
+                        ilosc_poprawnie_zaliczonych+=1  
+                        print "Ilosc poprawnie zaliczonych elementow {0}".format(ilosc_poprawnie_zaliczonych)
+                                                            
+        return ilosc_poprawnie_zaliczonych / float(len(self.data))
                 
     def skip(self,iterable, at_start=0, at_end=0):
         it = iter(iterable)
@@ -384,8 +426,8 @@ class Data:
 if __name__ == "__main__":
     d = Data()
     d.loadFile("/Users/lukaszdworakowski/Documents/Aptana Studio 3 Workspace/SWD/Data/dane.csv")
-    print d.sklasyfikuj(1, ["Temp3pm","Pressure9am","RelHumid9am"], 20, MetrykaValues.EUCLIDES)
-    print d.jakoscKlasyfikacji(10,["Temp3pm"], 2)   
+    print d.sklasyfikuj(1, ["Temp3pm","Pressure9am","RelHumid9am"], 20, MetrykaValues.MANHATAN)
+    print d.jakoscKlasyfikacji(10,["Temp3pm"], 2, "RainTomorrow", MetrykaValues.MANHATAN) * 100  
         
         
         

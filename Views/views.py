@@ -25,15 +25,46 @@ Builder.load_string("""
             widht:300
             
 <Console>:
-    ScrollView:
-        id: scrlv
-        TextInput:
-            id:console
-            text:'test'
-            background_color: [0, 0, 0, 0.5]
-            foreground_color: [1, 1, 1, 1]
-            size_hint: 1, None
-            height: max( (len(self._lines)+1) * self.line_height, scrlv.height)
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: 5
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint:(1, 0.3)
+            Accordion:
+                AccordionItem:
+                    title:'Krok 1'
+                    Spinner:
+                        id: ilosc_elementow
+                        text: "Ilosc elementow sasiadujacych"
+                        values:('Manhattan', 'Euclidesa', 'Mahalanobisa')
+                AccordionItem:
+                    title:'Krok 2'
+                    Spinner:
+                        id: ktory_wiersz
+                        text: "Wybierz wiersz"
+                        values:('Manhattan', 'Euclidesa', 'Mahalanobisa')
+                AccordionItem:
+                    title:'Krok 3'
+                    Spinner:
+                        id: dostepne_metryki
+                        text: "Metryka"
+                        values:('Manhattan', 'Euclidesa', 'Mahalanobisa')
+                AccordionItem:
+                    title:'Krok 4'
+                    Spinner:
+                        id: dostepne_metryki
+                        text: "Parametr klasy decyzyjnej"
+                        values:('Manhattan', 'Euclidesa', 'Mahalanobisa')
+        ScrollView:
+            id: scrlv
+            TextInput:
+                id:console
+                text:'test'
+                background_color: [0, 0, 0, 0.5]
+                foreground_color: [1, 1, 1, 1]
+                size_hint: 1, None
+                height: max( (len(self._lines)+1) * self.line_height, scrlv.height)
 """)
 
 class GraphScreen(Screen):
