@@ -209,7 +209,7 @@ class Data:
                 if i == numerWiersza:
                     continue
                 testedValuesArray = [self.data[i][j] for j in nazwaParametrow]
-                dist = m.metrykaMahalanobisa(testedValueCasted, [float(k) for k in testedValuesArray], None)
+                dist = m.metrykaMahalanobisa(testedValueCasted, [float(k) for k in testedValuesArray])
                 neighbourhoodArray.append((dist,self.data[i][parametrKlasyDecyzyjnej]))
             
         elif metryka == MetrykaValues.MANHATAN:
