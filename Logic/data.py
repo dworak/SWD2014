@@ -1,6 +1,19 @@
 import csv
 import array
 import string
+import operator
+import itertools
+import collections
+from operator import itemgetter
+
+from sys import maxint
+from metryka import Metryka
+from numpy.numarray.numerictypes import MAX_INT_SIZE
+
+class MetrykaValues:
+    MANHATAN      = 1
+    EUCLIDES      = 2
+    MAHALANOBIS   = 3
 
 class Data:
     
@@ -15,9 +28,19 @@ class Data:
                                 cls, *args, **kwargs)
         return cls._instance
     
-    def loadFile(self, sciezka):
-        with open(sciezka, 'rb') as csvfile:
+    #jesli chcemy wczytac dane od razu posortowane po odpowiedniej kolumnie dodaj parametr nadpisujacy domyslnie sorted i column
+    def loadFile(self, sciezka, app=None, index=-1, wantSorted=False):
+        with open(sciezka, 'rU') as csvfile:
             reader = csv.reader(csvfile, delimiter=';')
+            
+            listAttributes = None;
+            
+            if wantSorted == True and index>=0:
+                reader = list(reader)
+                listAttributes = reader[0]
+                reader = sorted(reader[1:], key=operator.itemgetter(index))
+                reader.insert(0, listAttributes)
+            
             for row in reader:
                 dict = {}
                 if (row[0][0].startswith('#')==False):
@@ -30,6 +53,10 @@ class Data:
                         self.data.append(dict)
                 else:
                     pass
+            text = "\n".join([str(i) for i in reader])
+            
+            if(app):
+                app.console.getConsole().text=text
                 
     def zamianaWartosciTekstowychNaWartosciLiczbowe(self):
         zamiana = {}
@@ -147,4 +174,177 @@ class Data:
             wartosciPoNormalizacji.append(z)
             
         return wartosciPoNormalizacji
+    
+    #http://docs.scipy.org/doc/scipy/reference/spatial.distance.html
+    def sklasyfikuj(self, numerWiersza, nazwaParametrow, liczbaSasiadow, metryka=MetrykaValues.EUCLIDES, parametrKlasyDecyzyjnej="RainTomorrow"):
+        m = Metryka()
+        
+        testedValuesArray = [self.data[numerWiersza][i] for i in nazwaParametrow]
+        testedValueCasted = [float(i) for i in testedValuesArray]
+        
+        alreadyFoundNeighbours = 0
+        neighbourhoodArray = []
+        
+        data = None
+        if metryka == MetrykaValues.EUCLIDES:
+
+            for i in range (0,len(self.data)):
+                if(alreadyFoundNeighbours == liczbaSasiadow):
+                    break
+                if i == numerWiersza:
+                    continue
+                testedValuesArray = [self.data[i][j] for j in nazwaParametrow]
+                dist = m.metrykaEuklidesowa(testedValueCasted, [float(k) for k in testedValuesArray])
+                neighbourhoodArray.append((dist,self.data[i][parametrKlasyDecyzyjnej]))
+                
+        
+        elif metryka == MetrykaValues.MAHALANOBIS:
+            
+            for i in range (0,len(self.data)):
+                if(alreadyFoundNeighbours == liczbaSasiadow):
+                    break
+                if i == numerWiersza:
+                    continue
+                testedValuesArray = [self.data[i][j] for j in nazwaParametrow]
+                dist = m.metrykaMahalanobisa(testedValueCasted, [float(k) for k in testedValuesArray], None)
+                neighbourhoodArray.append((dist,self.data[i][parametrKlasyDecyzyjnej]))
+            
+        elif metryka == MetrykaValues.MANHATAN:
+            
+            for i in range (0,len(self.data)):
+                if(alreadyFoundNeighbours == liczbaSasiadow):
+                    break
+                if i == numerWiersza:
+                    continue
+                testedValuesArray = [self.data[i][j] for j in nazwaParametrow]
+                print testedValuesArray
+                dist = m.metrykaManhattan(testedValueCasted, [float(k) for k in testedValuesArray])
+                print dist
+                neighbourhoodArray.append((dist,self.data[i][parametrKlasyDecyzyjnej]))
+                
+        sorted_by_first = sorted(neighbourhoodArray, key=lambda tup: tup[0])
+        
+        d = {}
+        for i in sorted_by_first[:liczbaSasiadow]:
+            if i[1] in d:
+                d[i[1]] +=1
+            else:
+                d[i[1]] = 0
+        
+        maxMember = None
+        maxMemberCount = 0        
+        for key in d:
+            if d[key] > maxMemberCount:
+                maxMemberCount = d[key]
+                maxMember = key
+            else:
+                continue
+        
+        return (maxMember,maxMemberCount) #war1 -> klasadycyzyjna, #war2 -> ilosc najblizszych sasiadow z taka klasa
+        
+    #Algorytm k-NN
+    
+    #Ustalamy wartosc k (najlepiej liczbe nieparzysta, zwykle ok. 5-15).
+    #Dla kazdego obiektu testowego o*:
+        #-  wyznaczamy odleglosc r(o*,x) pomiedzy o* i kazdym obiektem treningowym x,
+        #-  znajdujemy k obiektow treningowych najblizszych o*,
+        #-  wsrod wartosci decyzji odpowiadajacych tym obiektom wykonujemy glosowanie,
+        #-  najczesciej wystepujaca wartosc decyzji przypisujemy obiektowi o*.
+        
+    def jakoscKlasyfikacji(self,k, nazwaParametrow, numerWierszaTestowanego,parametrKlasyDecyzyjnej="RainTomorrow", metryka=MetrykaValues.EUCLIDES):
+        
+        m = Metryka()
+        
+        distances = []
+        
+#         testedValuesArray = [self.data[numerWierszaTestowanego][i] for i in nazwaParametrow]
+#         testedValueCasted = [float(i) for i in testedValuesArray]
+    
+#         assert len(numeryWierszyTreningowych) > 0, "Liczba elementow treningowych jest rowna 0"
+#         
+#         assert numerWierszaTestowanego not in numeryWierszyTreningowych, "Wiersz testowany nie moze byc w puli treningowej"
+        
+        sorted_by_second = None;
+        
+        if(metryka==MetrykaValues.EUCLIDES):
+            for j in range(len(self.data)):
+                currentValuesArray = [self.data[j][w] for w in nazwaParametrow]
+                currentValueCasted = [float(h) for h in currentValuesArray]
+                for i in range(len(self.data)):
+                    trainingValuesArray = [self.data[i][w] for w in nazwaParametrow]
+                    trainingValueCasted = [float(h) for h in trainingValuesArray]
+                    
+                    d = m.metrykaEuklidesowa(currentValueCasted, trainingValueCasted)
+                    distances.append((i,d));
+                    
+            sorted_by_second = sorted(distances, key=lambda tup: tup[1])
+           
+                
+        elif(metryka==MetrykaValues.MAHALANOBIS):
+            for j in range(len(self.data)):
+                currentValuesArray = [self.data[j][w] for w in nazwaParametrow]
+                currentValueCasted = [float(h) for h in currentValuesArray]
+                for i in range(len(self.data)):
+                    trainingValuesArray = [self.data[i][w] for w in nazwaParametrow]
+                    trainingValueCasted = [float(h) for h in trainingValuesArray]
+                    
+                    d = m.metrykaMahalanobisa(currentValueCasted, trainingValueCasted,None)
+                    distances.append((i,d));
+                    
+            sorted_by_second = sorted(distances, key=lambda tup: tup[1])
+            
+        elif(metryka==MetrykaValues.MANHATAN):
+            for j in range(len(self.data)):
+                currentValuesArray = [self.data[j][w] for w in nazwaParametrow]
+                currentValueCasted = [float(h) for h in currentValuesArray]
+                for i in range(len(self.data)):
+                    if i == j :
+                        continue
+                    else:
+                        trainingValuesArray = [self.data[i][w] for w in nazwaParametrow]
+                        trainingValueCasted = [float(h) for h in trainingValuesArray]
+                        
+                        d = m.metrykaManhattan(currentValueCasted, trainingValueCasted)
+                        distances.append((i,d));
+                        
+                sorted_by_second = sorted(distances, key=lambda tup: tup[1])
+            
+        d = {}
+        for i in sorted_by_second[:k]:
+            if i[1] in d:
+                d[i[1]] +=1
+            else:
+                d[i[1]] = 0
+        
+        maxMember = None
+        maxMemberCount = 0        
+        for key in d:
+            if d[key] > maxMemberCount:
+                maxMemberCount = d[key]
+                maxMember = key
+            else:
+                continue  
+        print maxMember, maxMemberCount
+        #print sorted_by_second   
+             
+                
+    def skip(self,iterable, at_start=0, at_end=0):
+        it = iter(iterable)
+        for x in itertools.islice(it, at_start):
+            pass
+        queue = collections.deque(itertools.islice(it, at_end))
+        for x in it:
+            queue.append(x)
+            yield queue.popleft()          
+    
+
+        
+if __name__ == "__main__":
+    d = Data()
+    d.loadFile("/Users/lukaszdworakowski/Documents/Aptana Studio 3 Workspace/SWD/Data/dane.csv")
+    print d.sklasyfikuj(1, ["Temp3pm","Pressure9am","RelHumid9am"], 20, MetrykaValues.EUCLIDES)
+    d.jakoscKlasyfikacji(10,["Temp3pm"], 2)   
+        
+        
+        
         
