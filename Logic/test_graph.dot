@@ -1,0 +1,12 @@
+digraph G {
+    lukasz -> mama -> tata;
+	main -> init;
+    main -> cleanup;
+    tata -> make_string;
+	tata -> lukasz;
+    tata -> printf
+    init -> make_string;
+    main -> printf;
+	lukasz -> execute;
+    execute -> compare;
+}

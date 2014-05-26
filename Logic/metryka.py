@@ -1,6 +1,4 @@
-from scipy.spatial.distance import euclidean, cityblock, mahalanobis
-from numpy.linalg import inv
-from numpy import cov
+from scipy.spatial.distance import euclidean, cityblock, mahalanobis, chebyshev
 
 class Metryka():
     
@@ -53,9 +51,11 @@ class Metryka():
         # od = abs(xa-xb) + abs(ya-yb)
         return cityblock(array1,array2)
     
-    def metrykaMahalanobisa(self,array1,array2):
-        
-        macierzKowariancji = inv(cov(array1,array2))
+    def metrykaCzebyszewa(self,array1, array2):
+        return chebyshev(array1,array2)
+    
+    def metrykaMahalanobisa(self,array1,array2, macierzKowariancji):
+    
         """
         Computes the Mahalanobis distance between two n-vectors ``u`` and ``v``,
         which is defined as

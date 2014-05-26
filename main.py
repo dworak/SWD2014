@@ -82,7 +82,7 @@ class ManagerPlikow:
 
     def zaladujModel(self,sciezka):
         import random
-        self.data.loadFile(sciezka, app, wantSorted=True, index=2)
+        self.data.loadFile(sciezka, app, wantSorted=True, index=0)
         for property in self.data.temp:
             r = lambda: random.randint(0,255)/255.0
             plot = MeshLinePlot(color=[r(), r(), r(), 1])
@@ -93,7 +93,7 @@ class ManagerPlikow:
                 try:
                     value = float(object[property])
                     points.append((i, value))
-                except ValueError:
+                except (ValueError, KeyError):
                     pass
                 i+=1
             plot.points = points
@@ -291,10 +291,7 @@ class SystemyWspomaganiaDecyzji(App):
             raise ValueError("Wrong tag of the slider, check it.", self)
         
         self.graphScreen.getGraph()._redraw_all()
-        
-
-        
-
+    
         
     def build(self):
         
@@ -302,8 +299,8 @@ class SystemyWspomaganiaDecyzji(App):
         layout = BoxLayout(padding=20, orientation=self.orient, spacing=20)
 
         self.graphScreen = GraphScreen()
-        
-        self.console = Console()
+
+        self.console = Console(app=app)
         
         self.sm.switch_to(self.console)
         

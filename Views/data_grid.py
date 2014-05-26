@@ -48,9 +48,9 @@ class HeaderLabel(Label):
 	bgcolor = ListProperty([0.108,0.476,0.611])
 
 import csv
-# data_json = open('data.json')
-# data = json.load(data_json)
-data = list(csv.reader("dane.csv", delimiter=';'))
+data_json = open('/Users/lukaszdworakowski/Documents/Aptana Studio 3 Workspace/SWD/Logic/zad1.txt')
+data = json.load(data_json)
+#data = list(csv.reader("dane.csv", delimiter=';'))
 
 header = ['ID', 'Nome', 'Preco', 'IVA']
 col_size = [0.1, 0.5, 0.2, 0.2]
@@ -272,10 +272,10 @@ def json_fill(self):
 		print d
 		grid.add_row(d, body_alignment, col_size, self)
 
-json_fill_btn = Button(text="JSON fill", on_press=partial(json_fill))
+# json_fill_btn = Button(text="JSON fill", on_press=partial(json_fill))
 
 btn_grid = BoxLayout(orientation="vertical")
-btn_grid.add_widget(json_fill_btn)
+# btn_grid.add_widget(json_fill_btn)
 btn_grid.add_widget(add_row_btn)
 btn_grid.add_widget(del_row_btn)
 btn_grid.add_widget(upt_row_btn)
